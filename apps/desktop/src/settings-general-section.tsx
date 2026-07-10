@@ -22,6 +22,10 @@ export function SettingsGeneralSection({
 }: SettingsGeneralSectionProps) {
   const connectedCount = runtime?.providers.filter((p) => p.hasAuth).length ?? 0;
   const [terminalShellDraft, setTerminalShellDraft] = useState(integratedTerminalShell);
+  const platform = window.piApp?.platform;
+  const isMac = platform === "darwin";
+  const shellPlaceholder = platform === "win32" ? "cmd.exe" : isMac ? "/bin/zsh" : "/bin/bash";
+  const modLabel = isMac ? "Cmd+" : "Ctrl+";
 
   useEffect(() => {
     setTerminalShellDraft(integratedTerminalShell);
@@ -73,7 +77,7 @@ export function SettingsGeneralSection({
           <input
             aria-label="Shell of integrated terminal"
             className="settings-text-input"
-            placeholder="/bin/zsh"
+            placeholder={shellPlaceholder}
             spellCheck={false}
             type="text"
             value={terminalShellDraft}
@@ -89,10 +93,10 @@ export function SettingsGeneralSection({
       </SettingsGroup>
 
       <SettingsGroup title="Shortcuts">
-        <SettingsInfoRow label="New thread" value="Cmd+Shift+O" />
-        <SettingsInfoRow label="Open settings" value="Cmd+," />
-        <SettingsInfoRow label="Toggle terminal" value="Cmd+J" />
-        <SettingsInfoRow label="New terminal tab" value="Cmd+T" />
+        <SettingsInfoRow label="New thread" value={`${modLabel}Shift+O`} />
+        <SettingsInfoRow label="Open settings" value={`${modLabel},`} />
+        <SettingsInfoRow label="Toggle terminal" value={`${modLabel}J`} />
+        <SettingsInfoRow label="New terminal tab" value={`${modLabel}T`} />
         <SettingsInfoRow label="Send message" value="Enter" />
         <SettingsInfoRow label="New line" value="Shift+Enter" />
       </SettingsGroup>

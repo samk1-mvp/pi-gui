@@ -977,15 +977,20 @@ function installApplicationMenu(): void {
 
 // Ensure npm (and other Homebrew/npm-global binaries) are available
 // even when pi-gui is launched via Finder/Dock (which has a minimal PATH).
-const extraBinPaths = [
-  "/opt/homebrew/bin",
-  "/usr/local/bin",
-  `${process.env.HOME}/.npm-global/bin`,
-].filter((p) => p);
-const currentPath = process.env.PATH ?? "";
-const missingPaths = extraBinPaths.filter((p) => !currentPath.split(":").includes(p));
-if (missingPaths.length > 0) {
-  process.env.PATH = [...missingPaths, currentPath].join(":");
+// These paths are macOS-specific; on Windows and Linux the system PATH is
+// already configured correctly by the shell profile / installer.
+if (process.platform === "darwin") {
+  const extraBinPaths = [
+    "/opt/homebrew/bin",
+    "/usr/local/bin",
+    `${process.env.HOME ?? ""}/.npm-global/bin`,
+  ].filter((p) => p);
+  const currentPath = process.env.PATH ?? "";
+  const delimiter = path.delimiter;
+  const missingPaths = extraBinPaths.filter((p) => !currentPath.split(delimiter).includes(p));
+  if (missingPaths.length > 0) {
+    process.env.PATH = [...missingPaths, currentPath].join(delimiter);
+  }
 }
 
 app.setName("pi");

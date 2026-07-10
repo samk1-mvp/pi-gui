@@ -124,10 +124,12 @@ if (notificationHelperPath && !existsSync(notificationHelperPath)) {
 
 const extractedDir = mkdtempSync(path.join(tmpdir(), "pi-gui-packaged-runtime-"));
 try {
-  execFileSync(pnpmBinary, ["exec", "asar", "extract", asarPath, extractedDir], {
+  const winShell = process.platform === "win32";
+  const quote = (s) => (winShell ? `"${s}"` : s);
+  execFileSync(pnpmBinary, ["exec", "asar", "extract", quote(asarPath), quote(extractedDir)], {
     cwd: desktopDir,
     stdio: "pipe",
-    shell: process.platform === "win32",
+    shell: winShell,
   });
 
   verifyRequiredPackages(extractedDir);

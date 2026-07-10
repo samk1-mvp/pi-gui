@@ -56,10 +56,12 @@ export function getFileDiff(workspacePath: string, filePath: string): Promise<st
                 resolve(stdout2);
                 return;
               }
-              // Untracked file — show content as all-additions diff
+              // Untracked file — show content as all-additions diff.
+              // Use the platform-appropriate null device so git --no-index works on Windows.
+              const devNull = process.platform === "win32" ? "NUL" : "/dev/null";
               execFile(
                 "git",
-                ["diff", "--no-index", "--", "/dev/null", filePath],
+                ["diff", "--no-index", "--", devNull, filePath],
                 { cwd: workspacePath, maxBuffer: 5 * 1024 * 1024 },
                 (_error3, stdout3) => {
                   // git diff --no-index exits 1 when files differ, which is expected
