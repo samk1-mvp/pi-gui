@@ -186,10 +186,12 @@ jobs:
         shell: bash
         env:
           GITHUB_REF_NAME: ${{ github.ref_name }}
+          CSC_LINK: ${{ secrets.WINDOWS_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.WINDOWS_CSC_KEY_PASSWORD }}
         run: |
           cd apps/desktop
           pnpm run build
-          node scripts/package-windows.mjs --win --publish never --config.npmRebuild=false "-c.extraMetadata.version=${GITHUB_REF_NAME#v}"
+          node scripts/package-windows.mjs --win --publish never --config.npmRebuild=false --config.signAndEditExecutable=true "-c.extraMetadata.version=${GITHUB_REF_NAME#v}"
 
       - name: Verify packaged runtime dependencies
         run: pnpm --dir apps/desktop run verify:packaged-runtime-deps:windows

@@ -49,6 +49,9 @@ linux:
 
 win:
   executableName: pi-gui
+  # signAndEditExecutable is false by default so local builds work without
+  # Windows Developer Mode (winCodeSign symlink extraction requires elevation).
+  # CI overrides this to true via --config.signAndEditExecutable=true.
   signAndEditExecutable: false
   target:
     - target: nsis
@@ -57,6 +60,17 @@ win:
     - target: portable
       arch:
         - x64
+
+nsis:
+  oneClick: false
+  perMachine: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: pi-gui
+  uninstallDisplayName: pi-gui
+
+electronUpdaterCompatibility: '>=2.16'
 
 toolsets:
   appimage: "1.0.2"

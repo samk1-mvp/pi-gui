@@ -49,15 +49,20 @@ execution all run through upstream `pi`.
 
 ## Install
 
-pi-gui is in public beta for **macOS (Apple Silicon)** and **Linux (AppImage)**.
+pi-gui is in public beta for **macOS (Apple Silicon)**, **Linux (AppImage)**, and **Windows (x64)**.
 
 ### From GitHub Releases
 
-Download the latest `.dmg` (macOS) or `.AppImage` (Linux) from the
-[Releases page](https://github.com/minghinmatthewlam/pi-gui/releases).
+Download the latest `.dmg` (macOS), `.AppImage` (Linux), or `.exe` (Windows)
+from the [Releases page](https://github.com/minghinmatthewlam/pi-gui/releases).
 
 On macOS, drag `pi-gui.app` into `/Applications` and launch it. Releases are signed
 and notarized. To update, download the newer release and replace the app.
+
+On Windows, run the `pi-gui-setup.exe` installer and follow the wizard. The
+portable build (`pi-gui-portable.exe`) runs without installation. Windows
+builds may be unsigned during beta; if SmartScreen warns, click **More info**
+then **Run anyway**.
 
 ### With Homebrew (macOS)
 
