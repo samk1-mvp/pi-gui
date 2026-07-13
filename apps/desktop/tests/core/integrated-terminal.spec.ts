@@ -8,6 +8,7 @@ import {
   makeUserDataDir,
   makeWorkspace,
   selectSession,
+  terminalProbe,
   TINY_PNG_BASE64,
   waitForWorkspaceByPath,
 } from "../helpers/electron-app";
@@ -23,6 +24,7 @@ test("opens a workspace terminal with persistent output, tabs, and takeover cont
   });
 
   try {
+    const probe = terminalProbe();
     const window = await harness.firstWindow();
     await waitForWorkspaceByPath(window, workspacePath);
     await createNamedThread(window, "Terminal host thread");
@@ -38,7 +40,7 @@ test("opens a workspace terminal with persistent output, tabs, and takeover cont
     await expect(window.getByTestId("terminal-tab")).toHaveCount(1);
 
     await terminal.locator(".xterm").click();
-    await window.keyboard.type("printf 'PI_TERMINAL_OK\\n'; pwd");
+    await window.keyboard.type(probe.echoAndDir);
     await window.keyboard.press("Enter");
     await expect(terminal.locator(".xterm-rows")).toContainText("PI_TERMINAL_OK", { timeout: 15_000 });
     await expect(terminal.locator(".xterm-rows")).toContainText(basename(workspacePath), { timeout: 15_000 });
@@ -91,7 +93,7 @@ test("opens a workspace terminal with persistent output, tabs, and takeover cont
     await expect(window.getByTestId("integrated-terminal")).not.toHaveClass(/terminal-panel--takeover/);
     await expect(window.getByTestId("composer")).toBeVisible();
 
-    await window.getByLabel(/Close Terminal/).last().click();
+    await window.locator(".terminal-panel__tab-close").last().click();
     await expect(window.getByTestId("terminal-tab")).toHaveCount(2);
   } finally {
     await harness.close();
@@ -140,7 +142,7 @@ test("pastes clipboard text into the integrated terminal once", async () => {
     await expect(terminal).toBeVisible();
     await terminal.locator(".xterm").click();
     await expect(terminal.locator(".xterm-rows")).toContainText(
-      new RegExp(`${escapeRegExp(basename(workspacePath))}|[#$%]\\s*$`),
+      new RegExp(`${escapeRegExp(basename(workspacePath))}|[#$%>]\\s*$`),
       { timeout: 15_000 },
     );
 
@@ -167,6 +169,7 @@ test("writes an oversized terminal paste in chunks instead of dropping it", asyn
   });
 
   try {
+    const probe = terminalProbe();
     const window = await harness.firstWindow();
     await waitForWorkspaceByPath(window, workspacePath);
     await createNamedThread(window, "Terminal large paste thread");
@@ -176,18 +179,15 @@ test("writes an oversized terminal paste in chunks instead of dropping it", asyn
     await expect(terminal).toBeVisible();
     await terminal.locator(".xterm").click();
     await expect(terminal.locator(".xterm-rows")).toContainText(
-      new RegExp(`${escapeRegExp(basename(workspacePath))}|[#$%]\\s*$`),
+      new RegExp(`${escapeRegExp(basename(workspacePath))}|[#$%>]\\s*$`),
       { timeout: 15_000 },
     );
 
-    // Payload exceeds MAX_WRITE_LENGTH (128 KiB) so the old code path dropped the
-    // whole write. 3000 lines of 63 chars + newline = 192000 bytes, then a unique
-    // end marker so we can wait for the full paste to land before sending EOF.
     const lineCount = 3000;
     const payload = `${`${"X".repeat(63)}\n`.repeat(lineCount)}ENDMARKER\n`;
     expect(payload.length).toBeGreaterThan(128 * 1024);
 
-    await window.keyboard.type("cat > payload.txt");
+    await window.keyboard.type(probe.startRedirect);
     await window.keyboard.press("Enter");
     await harness.electronApp.evaluate(({ clipboard }, text) => {
       clipboard.writeText(text);
@@ -195,10 +195,13 @@ test("writes an oversized terminal paste in chunks instead of dropping it", asyn
     await window.keyboard.press(desktopShortcut("V"));
     await expect(terminal.locator(".xterm-rows")).toContainText("ENDMARKER", { timeout: 30_000 });
 
-    await window.keyboard.press("Control+D");
-    await window.keyboard.type("wc -l payload.txt");
+    await window.keyboard.press(probe.eofKey);
+    if (probe.eofConfirm) {
+      await window.keyboard.press(probe.eofConfirm);
+    }
+    await window.keyboard.type(probe.countLines);
     await window.keyboard.press("Enter");
-    await expect(terminal.locator(".xterm-rows")).toContainText(`${lineCount + 1} payload.txt`, {
+    await expect(terminal.locator(".xterm-rows")).toContainText(probe.lineCountText(lineCount + 1), {
       timeout: 15_000,
     });
   } finally {

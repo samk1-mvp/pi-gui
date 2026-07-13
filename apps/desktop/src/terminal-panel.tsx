@@ -225,6 +225,16 @@ export function TerminalPanel({
           return false;
         }
       }
+      // Let Ctrl/Cmd+J bubble to the window-level keydown handler so the
+      // terminal can be toggled while it has focus.
+      if (commandModifier && !event.shiftKey && key === "j") {
+        return false;
+      }
+      // On Windows/Linux, let Ctrl+V bubble so the browser paste event fires
+      // instead of sending a raw 0x16 byte to the PTY.
+      if (api.platform !== "darwin" && commandModifier && !event.shiftKey && key === "v") {
+        return false;
+      }
       return true;
     });
     terminal.onData((data) => {

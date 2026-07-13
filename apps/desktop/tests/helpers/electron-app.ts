@@ -905,6 +905,39 @@ export function desktopShortcut(keyChord: string): string {
   return `${desktopModifierKey}+${keyChord}`;
 }
 
+export interface TerminalProbe {
+  readonly isWindows: boolean;
+  readonly echoAndDir: string;
+  readonly startRedirect: string;
+  readonly eofKey: string;
+  readonly eofConfirm: string | null;
+  readonly countLines: string;
+  readonly lineCountText: (count: number) => string;
+}
+
+export function terminalProbe(): TerminalProbe {
+  if (process.platform === "win32") {
+    return {
+      isWindows: true,
+      echoAndDir: "echo PI_TERMINAL_OK & cd",
+      startRedirect: "sort > payload.txt",
+      eofKey: "Control+Z",
+      eofConfirm: "Enter",
+      countLines: 'find /c /v "" < payload.txt',
+      lineCountText: (count: number) => String(count),
+    };
+  }
+  return {
+    isWindows: false,
+    echoAndDir: "printf 'PI_TERMINAL_OK\\n'; pwd",
+    startRedirect: "cat > payload.txt",
+    eofKey: "Control+D",
+    eofConfirm: null,
+    countLines: "wc -l payload.txt",
+    lineCountText: (count: number) => `${count} payload.txt`,
+  };
+}
+
 export async function pasteTinyPngViaClipboard(
   harness: DesktopHarness,
   window: Page,
